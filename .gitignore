@@ -3,7 +3,7 @@ metadata.md
 config/slide_codes.csv
 tools/
 
-# ---- development scripts (kept on disk, not part of the published pipeline; see METHODS.md section 6)
+# dev
 scripts/run_dl_lesions.py
 scripts/submit_dl_lesions.sh
 scripts/submit_measure.sh
@@ -25,5 +25,5 @@ analysis/failure_gallery.py
 analysis/missed_traced_gallery.py
 methods/matching.py
 
-# ---- detailed internal methods notes (kept on disk, not published)
+# internal
 METHODS.md
