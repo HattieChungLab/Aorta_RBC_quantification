@@ -1,7 +1,5 @@
 # Red-cell quantification in haemorrhagic lesions of the aortic media
 
-Results for all 25 variants are in `RESULTS.md`; all settings are in `config/base.yaml`.
-
 ## Target
 
 The number and area of red blood cells inside outlined haemorrhagic lesions of the aortic
