@@ -1,0 +1,73 @@
+# RBC / haemorrhagic-lesion pipeline configuration.
+# All outputs go to scratch. Code lives in the project folder.
+
+paths:
+  # one sub-folder per slide, each holding <slide>.svs + its QuPath .geojson
+  data_dir: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/All slide marked"
+  output_dir: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/outputs"
+  # frozen, validated handover code (measure_lesions.py, aortic_blood_quant.py, check_detector.py)
+  handover_dir: "/nfs/roberts/project/pi_hc859/swf23/TAA_histology/Mina_RBC_segmentation/handover_v2/original_package/handover"
+  histoplus_weights: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/model_weights/histoplus_cellvit_segmentor_40x.pt"
+  cellpose_models_dir: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/model_weights/cellpose"
+  # PRIVATE, gitignored: slide code (S01...) -> real slide name; see metadata.md
+  slide_codes: "/nfs/roberts/project/pi_hc859/swf23/TAA_histology/Mina_RBC_segmentation/RBC_segmentation/config/slide_codes.csv"
+  # collaborator's fully counted 100 um fields (screenshots of dense_all_methods.jpg panels, every red cell marked green)
+  complete_fields_dir: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/Hand annotation mz"
+  # the 2 Nov 2026 batch, kept for comparison only (stale: annotations have since changed)
+  nov2_summary: "/nfs/roberts/scratch/pi_hc859/swf23/aorta_histology/data/Mina_RBC_segmentation/All slide marked/Results/all_slides_summary.csv"
+
+# folders under data_dir that are not slides
+skip_folders: ["Results", "Script old", "Hemorrhagic lesion quant"]
+
+slide_mpp: 0.2524          # Aperio 40x; used when converting slide px to um
+match_tol_um: 3.0          # two detections / a detection and a hand cell within this = same cell
+
+cellpose:
+  pretrained_model: "cpsam_v2"   # Cellpose-SAM v2 (Cellpose 4.2 default; the 1.23 GB model named in record F.2)
+  validation_inputs: ["rgb", "redexcess"]   # both tested on the traced cells
+  lesion_input: "redexcess"  # chosen by validation 2026-11-13: colour input found 0/126 traced cells
+  diameter_um: 4.5
+  flow_threshold: 0.4
+  cellprob_threshold: 0.0
+  min_size: 15
+  batch_size: 32
+
+histoplus:
+  tile: 448                  # model training image size
+  overlap: 96
+  batch_size: 16
+  mixed_precision: true      # only takes effect on CUDA
+  rbc_class: "Red blood cell"   # a Cellpose cell is an RBC if this is the majority HistoPLUS pixel label inside it
+
+# CP(0)+HP + HPfill ("combined"): Cellpose red cells + HistoPLUS's own red-cell outlines where
+# Cellpose has none. Rules for adding a HistoPLUS cell (set from analysis/fill_rules.py):
+combined:
+  max_covered: 0.000000001   # < this fraction of it already covered by Cellpose red cells (i.e. not touching)
+  min_area_um2: 0            # at least this big (drops slivers)
+  min_dist_um: 0             # centre further than this from every Cellpose red-cell centre
+
+dl_lesions:
+  region_px: 2048            # lesions are processed in square regions of this core size (level-0 px)
+  margin_px: 64              # extra context around each region (16 um, > 3 cell diameters)
+  overlays_per_lesion: 2     # review JPGs written per lesion (largest regions first)
+  overlay_max_side: 1600
+
+# individually outlined RBC validation sets (handover sec. 2.5).
+# red_ref / sat_ref are the values the handover used, so the blob numbers reproduce exactly.
+validation:
+  - slide_id: "S11"
+    batch: "deep red"
+    red_ref: 0.61
+    sat_ref: 0.53
+  - slide_id: "S20"
+    batch: "pale"
+    red_ref: 0.345
+    sat_ref: 0.293
+validation_window_px: 448   # crop around each traced cell; same pixels for every method
+found_iou: 0.5              # a traced cell is found if a method's cell overlaps it with IoU >= this
+
+# QC thresholds for the step-2 batch (handover sec. 5 item 4)
+qc:
+  cell_area_ok_um2: [10, 20]
+  pale_red_ref: 0.25         # below this the slide is paler than anything validated (pale set = 0.345)
+  media_area_fold: 2.0       # flag media area > fold x or < 1/fold x the cohort median

@@ -1,0 +1,29 @@
+*__pycache__*
+metadata.md
+config/slide_codes.csv
+tools/
+
+# ---- development scripts (kept on disk, not part of the published pipeline; see METHODS.md section 6)
+scripts/run_dl_lesions.py
+scripts/submit_dl_lesions.sh
+scripts/submit_measure.sh
+scripts/make_manifest.py
+scripts/validate_cells.py
+scripts/validate_counts.py
+scripts/submit_validate.sh
+analysis/summarize_dl.py
+analysis/qc_measure.py
+analysis/benchmark_segmenters.py
+analysis/combine_benchmarks.py
+analysis/summarize_validation.py
+analysis/dense_compare.py
+analysis/fill_diagnostic.py
+analysis/fill_rules.py
+analysis/test_fixes.py
+analysis/error_gallery.py
+analysis/failure_gallery.py
+analysis/missed_traced_gallery.py
+methods/matching.py
+
+# ---- detailed internal methods notes (kept on disk, not published)
+METHODS.md
